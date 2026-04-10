@@ -37,7 +37,7 @@ struct VaultView: View {
                 Text("PassGuard")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.pgTextPrimary)
-                Text("\(store.items.count) записей")
+                Text("\(store.items.count) \(pluralRecords(store.items.count))")
                     .font(.system(size: 12))
                     .foregroundColor(.pgTextSecondary)
             }
@@ -49,6 +49,13 @@ struct VaultView: View {
         .padding(.horizontal, 20)
         .padding(.top, 56)
         .padding(.bottom, 12)
+    }
+
+    private func pluralRecords(_ n: Int) -> String {
+        let mod10 = n % 10, mod100 = n % 100
+        if mod10 == 1 && mod100 != 11 { return "запись" }
+        if (2...4).contains(mod10) && !(11...14).contains(mod100) { return "записи" }
+        return "записей"
     }
 
     private var searchBar: some View {
@@ -113,25 +120,27 @@ struct VaultView: View {
                             CredentialRow(credential: cred)
                                 .onTapGesture { editTarget = cred }
                                 .contextMenu {
-                                    Button {
-                                        UIPasteboard.general.string = cred.login
-                                        ToastManager.shared.show("Логин скопирован")
-                                    } label: { Label("Копировать логин", systemImage: "person") }
-
-                                    Button {
-                                        UIPasteboard.general.string = cred.password
-                                        ToastManager.shared.show("Пароль скопирован")
-                                    } label: { Label("Копировать пароль", systemImage: "key") }
-
+                                    if !cred.login.isEmpty {
+                                        Button {
+                                            ToastManager.shared.copied("Логин", value: cred.login)
+                                        } label: { Label("Копировать логин", systemImage: "person") }
+                                    }
+                                    if !cred.password.isEmpty {
+                                        Button {
+                                            ToastManager.shared.copied("Пароль", value: cred.password)
+                                        } label: { Label("Копировать пароль", systemImage: "key") }
+                                    }
                                     if !cred.token.isEmpty {
                                         Button {
-                                            UIPasteboard.general.string = cred.token
-                                            ToastManager.shared.show("Токен скопирован")
+                                            ToastManager.shared.copied("Токен", value: cred.token)
                                         } label: { Label("Копировать токен", systemImage: "chevron.left.forwardslash.chevron.right") }
                                     }
-
+                                    if !cred.url.isEmpty {
+                                        Button {
+                                            ToastManager.shared.copied("URL", value: cred.url)
+                                        } label: { Label("Копировать URL", systemImage: "link") }
+                                    }
                                     Divider()
-
                                     Button(role: .destructive) {
                                         withAnimation { store.delete(cred) }
                                     } label: { Label("Удалить", systemImage: "trash") }
@@ -152,10 +161,7 @@ struct CredentialRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            InitialsAvatar(
-                text: credential.initials,
-                color: credential.accentColor
-            )
+            InitialsAvatar(text: credential.initials, color: credential.accentColor)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(credential.displayTitle)
@@ -171,7 +177,7 @@ struct CredentialRow: View {
                             .lineLimit(1)
                     }
                     if !credential.token.isEmpty {
-                        Text("Token")
+                        Text("Токен")
                             .font(.system(size: 9, weight: .semibold))
                             .foregroundColor(.pgAmber)
                             .padding(.horizontal, 5)
@@ -199,10 +205,7 @@ struct CredentialRow: View {
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color.pgCard)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.pgBorder, lineWidth: 1)
-                )
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.pgBorder, lineWidth: 1))
         )
     }
 }

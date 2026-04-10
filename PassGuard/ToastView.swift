@@ -2,39 +2,51 @@ import SwiftUI
 
 struct ToastView: View {
     let msg: ToastMessage
-
-    var iconColor: Color {
-        switch msg.type {
-        case .success: return .pgGreen
-        case .error:   return .pgRed
-        case .info:    return .pgBlue
-        }
-    }
+    @State private var appear = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: msg.icon)
-                .foregroundColor(iconColor)
-                .font(.system(size: 15, weight: .semibold))
-            Text(msg.text)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.pgTextPrimary)
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(msg.type.color.opacity(0.18))
+                    .frame(width: 36, height: 36)
+                Image(systemName: msg.type.icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(msg.type.color)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(msg.text)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                if let sub = msg.subtext {
+                    Text(sub)
+                        .font(.system(size: 11, weight: .regular, design: .monospaced))
+                        .foregroundColor(.white.opacity(0.45))
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.pgCard)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(msg.type.bgColor)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.pgBorder, lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(msg.type.borderColor, lineWidth: 1)
                 )
         )
-        .shadow(color: .black.opacity(0.4), radius: 16, x: 0, y: 6)
-        .transition(.asymmetric(
-            insertion: .move(edge: .top).combined(with: .opacity),
-            removal: .opacity
-        ))
+        .shadow(color: msg.type.color.opacity(0.25), radius: 20, x: 0, y: 8)
+        .scaleEffect(appear ? 1 : 0.88)
+        .opacity(appear ? 1 : 0)
+        .onAppear {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) {
+                appear = true
+            }
+        }
     }
 }
 
@@ -47,12 +59,19 @@ struct ToastOverlay: ViewModifier {
             if let msg = toast.current {
                 VStack {
                     ToastView(msg: msg)
+                        .padding(.horizontal, 20)
                         .padding(.top, 56)
+                        .id(msg.id)
                     Spacer()
                 }
-                .animation(.spring(response: 0.35, dampingFraction: 0.75), value: toast.current?.id)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
+                .zIndex(999)
             }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: toast.current?.id)
     }
 }
 

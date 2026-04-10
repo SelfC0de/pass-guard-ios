@@ -15,9 +15,9 @@ enum AppTab: Int, CaseIterable {
 
     var label: String {
         switch self {
-        case .vault:    return "Vault"
-        case .add:      return "Add"
-        case .settings: return "Settings"
+        case .vault:    return "Хранилище"
+        case .add:      return "Добавить"
+        case .settings: return "Настройки"
         }
     }
 }

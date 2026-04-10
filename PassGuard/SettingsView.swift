@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var store: CredentialStore
+    @State private var showDeleteConfirm = false
 
     var body: some View {
         ZStack {
@@ -20,15 +21,22 @@ struct SettingsView: View {
                 .padding(.bottom, 100)
             }
         }
+        .alert("Удалить все записи?", isPresented: $showDeleteConfirm) {
+            Button("Удалить", role: .destructive) {
+                withAnimation { store.items.removeAll() }
+                ToastManager.shared.show("Все записи удалены", type: .error)
+            }
+            Button("Отмена", role: .cancel) {}
+        } message: {
+            Text("Это действие нельзя отменить.")
+        }
     }
 
     private var header: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Настройки")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(.pgTextPrimary)
-            }
+            Text("Настройки")
+                .font(.system(size: 24, weight: .bold, design: .rounded))
+                .foregroundColor(.pgTextPrimary)
             Spacer()
         }
         .padding(.bottom, 4)
@@ -40,15 +48,15 @@ struct SettingsView: View {
                 icon: "faceid",
                 iconColor: .pgGreen,
                 title: "Face ID / Touch ID",
-                subtitle: "Разблокировка биометрией",
+                subtitle: "Требовать при открытии",
                 value: $settings.biometricsEnabled
             )
-            Divider().background(Color.pgBorder)
+            Divider().background(Color.pgBorder).padding(.vertical, 2)
             SettingsToggle(
                 icon: "doc.on.clipboard",
                 iconColor: .pgBlue,
-                title: "Авто-копировать",
-                subtitle: "Копировать пароль при открытии",
+                title: "Авто-копирование",
+                subtitle: "Копировать пароль при открытии записи",
                 value: $settings.autoCopyOnOpen
             )
         }
@@ -69,8 +77,7 @@ struct SettingsView: View {
     private var dangerSection: some View {
         SettingsSection(title: "Данные") {
             Button {
-                withAnimation { store.items.removeAll() }
-                ToastManager.shared.show("Все записи удалены", icon: "trash.fill", type: .error)
+                showDeleteConfirm = true
             } label: {
                 HStack(spacing: 12) {
                     ZStack {
@@ -81,14 +88,26 @@ struct SettingsView: View {
                             .font(.system(size: 14))
                             .foregroundColor(.pgRed)
                     }
-                    Text("Удалить все записи")
-                        .font(.system(size: 15))
-                        .foregroundColor(.pgRed)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Удалить все записи")
+                            .font(.system(size: 15))
+                            .foregroundColor(.pgRed)
+                        Text("\(store.items.count) \(pluralRecords(store.items.count))")
+                            .font(.system(size: 12))
+                            .foregroundColor(.pgTextTertiary)
+                    }
                     Spacer()
                 }
                 .padding(.vertical, 4)
             }
         }
+    }
+
+    private func pluralRecords(_ n: Int) -> String {
+        let mod10 = n % 10, mod100 = n % 100
+        if mod10 == 1 && mod100 != 11 { return "запись" }
+        if (2...4).contains(mod10) && !(11...14).contains(mod100) { return "записи" }
+        return "записей"
     }
 
     private var versionSection: some View {

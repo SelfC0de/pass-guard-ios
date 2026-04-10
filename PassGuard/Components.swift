@@ -49,9 +49,9 @@ struct PGTextField: View {
                     }
 
                     Button {
-                        if let clip = UIPasteboard.general.string {
+                        if let clip = UIPasteboard.general.string, !clip.isEmpty {
                             text = clip
-                            ToastManager.shared.show("Вставлено", icon: "doc.on.clipboard.fill")
+                            ToastManager.shared.show("Вставлено из буфера", type: .info)
                         }
                     } label: {
                         Image(systemName: "doc.on.clipboard")
@@ -61,8 +61,7 @@ struct PGTextField: View {
 
                     if !text.isEmpty {
                         Button {
-                            UIPasteboard.general.string = text
-                            ToastManager.shared.show("Скопировано", icon: "checkmark.circle.fill")
+                            ToastManager.shared.copied(label, value: text)
                         } label: {
                             Image(systemName: "doc.on.doc")
                                 .font(.system(size: 13))
@@ -120,24 +119,5 @@ struct InitialsAvatar: View {
                 .foregroundColor(color)
         }
         .frame(width: size, height: size)
-    }
-}
-
-struct CopyButton: View {
-    let value: String
-    let label: String
-
-    var body: some View {
-        Button {
-            UIPasteboard.general.string = value
-            ToastManager.shared.show("\(label) скопирован", icon: "checkmark.circle.fill")
-        } label: {
-            Image(systemName: "doc.on.doc")
-                .font(.system(size: 14))
-                .foregroundColor(.pgBlue.opacity(0.7))
-                .frame(width: 32, height: 32)
-                .background(Color.pgBlue.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
     }
 }
