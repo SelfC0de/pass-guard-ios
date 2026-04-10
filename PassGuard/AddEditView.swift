@@ -46,7 +46,7 @@ struct AddEditView: View {
             }
         }
         .onAppear { loadDraft() }
-        .onChange(of: credential) { _ in loadDraft() }
+        .onChange(of: credential) { loadDraft() }
     }
 
     private func loadDraft() {
@@ -146,7 +146,7 @@ struct AddEditView: View {
             focusedToken = false
             store.save(draft)
             onSave(draft)
-            ToastManager.shared.show(isEdit ? "Сохранено" : "Добавлено", icon: "checkmark.circle.fill")
+            ToastManager.shared.show(isEdit ? "Сохранено" : "Добавлено")
             if !isEdit { draft = Credential() }
         } label: {
             HStack {
