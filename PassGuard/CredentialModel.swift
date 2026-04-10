@@ -37,6 +37,7 @@ enum CredentialCategory: String, CaseIterable, Codable {
 
 struct Credential: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
+    var title: String = ""
     var url: String = ""
     var login: String = ""
     var password: String = ""
@@ -45,6 +46,7 @@ struct Credential: Identifiable, Codable, Equatable {
     var createdAt: Date = Date()
 
     var displayTitle: String {
+        if !title.isEmpty { return title }
         if !url.isEmpty {
             return url
                 .replacingOccurrences(of: "https://", with: "")

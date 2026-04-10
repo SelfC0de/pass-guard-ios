@@ -135,32 +135,16 @@ struct AddEditView: View {
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: draft.category)
 
-            // Editable title (URL or login)
-            ZStack {
-                if draft.displayTitle == "Без названия" {
-                    Text("Название")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundColor(Color.white.opacity(0.25))
-                }
-                TextField("", text: Binding(
-                    get: {
-                        // Show url stripped or login as title
-                        if !draft.url.isEmpty { return draft.url }
-                        return draft.login
-                    },
-                    set: { val in
-                        // Write to url if starts with http, else to url field
-                        draft.url = val
-                    }
-                ))
+            // Editable title
+            TextField("Название", text: $draft.title)
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(.pgTextPrimary)
+                .foregroundColor(draft.title.isEmpty ? Color.white.opacity(0.25) : .pgTextPrimary)
                 .multilineTextAlignment(.center)
                 .focused($focusedField, equals: .title)
                 .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .opacity(draft.url.isEmpty && draft.login.isEmpty ? 0 : 1)
-            }
+                .textInputAutocapitalization(.words)
+                .submitLabel(.done)
+                .onSubmit { focusedField = nil }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 24)
@@ -173,6 +157,21 @@ struct AddEditView: View {
     // MARK: - Fields card
     private var fieldsCard: some View {
         VStack(spacing: 0) {
+            // Title
+            InlineField(
+                label: "Название",
+                placeholder: "необязательно",
+                text: $draft.title,
+                isSecure: false,
+                keyboard: .default,
+                focused: $focusedField,
+                field: .title,
+                trailingAction: nil,
+                trailingIcon: nil
+            )
+
+            divider
+
             // Login
             InlineField(
                 label: "Имя пользователя",
