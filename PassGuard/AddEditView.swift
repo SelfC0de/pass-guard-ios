@@ -82,17 +82,24 @@ struct AddEditView: View {
     private var navBar: some View {
         HStack {
             Button {
-                dismiss()
+                focusedField = nil
+                // Cancel: restore original or just close
+                if let original = credential {
+                    onSave(original)  // pass back unchanged
+                } else {
+                    dismiss()
+                }
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.12))
-                        .frame(width: 32, height: 32)
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 40, height: 40)
                     Image(systemName: "xmark")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.pgTextPrimary)
                 }
             }
+            .buttonStyle(.plain)
 
             Spacer()
 
@@ -107,16 +114,18 @@ struct AddEditView: View {
                 store.save(draft)
                 onSave(draft)
                 ToastManager.shared.show(isEdit ? "Сохранено" : "Добавлено")
+                if !isEdit { dismiss() }
             } label: {
                 ZStack {
                     Circle()
                         .fill(canSave ? Color.pgBlue : Color.pgBlue.opacity(0.3))
-                        .frame(width: 32, height: 32)
+                        .frame(width: 40, height: 40)
                     Image(systemName: "checkmark")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white)
                 }
             }
+            .buttonStyle(.plain)
             .disabled(!canSave)
         }
         .padding(.horizontal, 20)

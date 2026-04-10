@@ -30,10 +30,13 @@ struct VaultView: View {
         .background(Color.pgBackground)
         .sheet(item: $editTarget) { cred in
             AddEditView(credential: cred, onSave: { updated in
-                store.save(updated)
+                // Only save if something actually changed
+                if updated != cred {
+                    store.save(updated)
+                }
                 editTarget = nil
             })
-            .id(cred.id)  // force view recreation on each open
+            .id(cred.id)
         }
         .alert("Удалить все записи?", isPresented: $showDeleteAll) {
             Button("Удалить всё", role: .destructive) {
