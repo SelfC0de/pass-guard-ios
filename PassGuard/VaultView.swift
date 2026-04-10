@@ -2,14 +2,18 @@ import SwiftUI
 
 struct VaultView: View {
     @EnvironmentObject var store: CredentialStore
+    @EnvironmentObject var settings: SettingsStore
     @State private var search: String = ""
+    @State private var selectedCategory: CredentialCategory = .general
     @State private var editTarget: Credential? = nil
+    @State private var showDeleteAll: Bool = false
     @FocusState private var searchFocused: Bool
 
     var filtered: [Credential] {
-        if search.isEmpty { return store.items }
+        let base = store.items(for: selectedCategory)
+        if search.isEmpty { return base }
         let q = search.lowercased()
-        return store.items.filter {
+        return base.filter {
             $0.url.lowercased().contains(q) ||
             $0.login.lowercased().contains(q) ||
             $0.displayTitle.lowercased().contains(q)
@@ -19,6 +23,7 @@ struct VaultView: View {
     var body: some View {
         VStack(spacing: 0) {
             headerBar
+            categoryCards
             searchBar
             list
         }
@@ -29,10 +34,23 @@ struct VaultView: View {
                 editTarget = nil
             })
         }
+        .alert("Удалить все записи?", isPresented: $showDeleteAll) {
+            Button("Удалить всё", role: .destructive) {
+                withAnimation {
+                    store.deleteAll()
+                    selectedCategory = .general
+                }
+                ToastManager.shared.show("Все записи удалены", type: .error)
+            }
+            Button("Отмена", role: .cancel) {}
+        } message: {
+            Text("Это действие нельзя отменить. Будут удалены все \(store.items.count) \(pluralRecords(store.items.count)).")
+        }
     }
 
+    // MARK: - Header
     private var headerBar: some View {
-        HStack {
+        HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("PassGuard")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
@@ -42,22 +60,50 @@ struct VaultView: View {
                     .foregroundColor(.pgTextSecondary)
             }
             Spacer()
-            Image(systemName: "shield.lefthalf.filled")
-                .font(.system(size: 22))
-                .foregroundColor(.pgBlue)
+            HStack(spacing: 12) {
+                Image(systemName: "shield.lefthalf.filled")
+                    .font(.system(size: 20))
+                    .foregroundColor(.pgBlue)
+
+                if !store.items.isEmpty {
+                    Button {
+                        showDeleteAll = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 17))
+                            .foregroundColor(.pgRed.opacity(0.8))
+                    }
+                }
+            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 56)
         .padding(.bottom, 12)
     }
 
-    private func pluralRecords(_ n: Int) -> String {
-        let mod10 = n % 10, mod100 = n % 100
-        if mod10 == 1 && mod100 != 11 { return "запись" }
-        if (2...4).contains(mod10) && !(11...14).contains(mod100) { return "записи" }
-        return "записей"
+    // MARK: - Category cards
+    private var categoryCards: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(CredentialCategory.allCases, id: \.self) { cat in
+                    CategoryCard(
+                        category: cat,
+                        count: cat == .general ? store.items.count : store.items(for: cat).count,
+                        isSelected: selectedCategory == cat
+                    ) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            selectedCategory = cat
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+        }
+        .padding(.bottom, 8)
     }
 
+    // MARK: - Search
     private var searchBar: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
@@ -100,19 +146,25 @@ struct VaultView: View {
         .padding(.bottom, 12)
     }
 
+    // MARK: - List
     private var list: some View {
         Group {
             if filtered.isEmpty {
                 VStack(spacing: 12) {
                     Spacer()
-                    Image(systemName: "lock.slash")
+                    Image(systemName: emptyIcon)
                         .font(.system(size: 40))
                         .foregroundColor(.pgTextTertiary)
-                    Text(store.items.isEmpty ? "Нет записей" : "Ничего не найдено")
+                    Text(emptyTitle)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.pgTextSecondary)
+                    Text(emptySubtitle)
+                        .font(.system(size: 13))
+                        .foregroundColor(.pgTextTertiary)
+                        .multilineTextAlignment(.center)
                     Spacer()
                 }
+                .padding(.horizontal, 40)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 8) {
@@ -121,24 +173,20 @@ struct VaultView: View {
                                 .onTapGesture { editTarget = cred }
                                 .contextMenu {
                                     if !cred.login.isEmpty {
-                                        Button {
-                                            ToastManager.shared.copied("Логин", value: cred.login)
-                                        } label: { Label("Копировать логин", systemImage: "person") }
+                                        Button { ToastManager.shared.copied("Логин", value: cred.login) }
+                                        label: { Label("Копировать логин", systemImage: "person") }
                                     }
                                     if !cred.password.isEmpty {
-                                        Button {
-                                            ToastManager.shared.copied("Пароль", value: cred.password)
-                                        } label: { Label("Копировать пароль", systemImage: "key") }
+                                        Button { ToastManager.shared.copied("Пароль", value: cred.password) }
+                                        label: { Label("Копировать пароль", systemImage: "key") }
                                     }
                                     if !cred.token.isEmpty {
-                                        Button {
-                                            ToastManager.shared.copied("Токен", value: cred.token)
-                                        } label: { Label("Копировать токен", systemImage: "chevron.left.forwardslash.chevron.right") }
+                                        Button { ToastManager.shared.copied("Токен", value: cred.token) }
+                                        label: { Label("Копировать токен", systemImage: "chevron.left.forwardslash.chevron.right") }
                                     }
                                     if !cred.url.isEmpty {
-                                        Button {
-                                            ToastManager.shared.copied("URL", value: cred.url)
-                                        } label: { Label("Копировать URL", systemImage: "link") }
+                                        Button { ToastManager.shared.copied("URL", value: cred.url) }
+                                        label: { Label("Копировать URL", systemImage: "link") }
                                     }
                                     Divider()
                                     Button(role: .destructive) {
@@ -153,7 +201,97 @@ struct VaultView: View {
             }
         }
     }
+
+    private var emptyIcon: String {
+        switch selectedCategory {
+        case .general:  return store.items.isEmpty ? "lock.slash" : "magnifyingglass"
+        case .codes:    return "barcode"
+        case .wifi:     return "wifi.slash"
+        case .security: return "lock.shield"
+        }
+    }
+
+    private var emptyTitle: String {
+        if !search.isEmpty { return "Ничего не найдено" }
+        switch selectedCategory {
+        case .general:  return "Нет записей"
+        case .codes:    return "Нет кодов"
+        case .wifi:     return "Нет Wi-Fi"
+        case .security: return "Нет записей безопасности"
+        }
+    }
+
+    private var emptySubtitle: String {
+        if !search.isEmpty { return "Попробуйте изменить запрос" }
+        return "Добавьте запись через вкладку «Добавить»"
+    }
+
+    private func pluralRecords(_ n: Int) -> String {
+        let mod10 = n % 10, mod100 = n % 100
+        if mod10 == 1 && mod100 != 11 { return "запись" }
+        if (2...4).contains(mod10) && !(11...14).contains(mod100) { return "записи" }
+        return "записей"
+    }
 }
+
+// MARK: - Category Card
+
+struct CategoryCard: View {
+    let category: CredentialCategory
+    let count: Int
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(category.accent.opacity(isSelected ? 0.25 : 0.12))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: category.icon)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(category.accent)
+                    }
+                    Spacer()
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(category.accent)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(count)")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(isSelected ? category.accent : .pgTextPrimary)
+                    Text(category.label)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(isSelected ? category.accent.opacity(0.8) : .pgTextSecondary)
+                }
+            }
+            .padding(12)
+            .frame(width: 100)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(isSelected ? category.accent.opacity(0.08) : Color.pgCard)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(
+                                isSelected ? category.accent.opacity(0.5) : Color.pgBorder,
+                                lineWidth: isSelected ? 1.5 : 1
+                            )
+                    )
+            )
+            .scaleEffect(isSelected ? 1.02 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Credential Row
 
 struct CredentialRow: View {
     let credential: Credential
@@ -177,13 +315,7 @@ struct CredentialRow: View {
                             .lineLimit(1)
                     }
                     if !credential.token.isEmpty {
-                        Text("Токен")
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundColor(.pgAmber)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(Color.pgAmber.opacity(0.12))
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                        categoryPill(text: "Токен", color: .pgAmber)
                     }
                 }
             }
@@ -191,6 +323,8 @@ struct CredentialRow: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
+                categoryPill(text: credential.category.label, color: credential.category.accent)
+                    .opacity(credential.category == .general ? 0 : 1)
                 if !credential.password.isEmpty {
                     StrengthBar(score: credential.strengthScore, color: credential.strengthColor)
                         .frame(width: 36)
@@ -207,5 +341,15 @@ struct CredentialRow: View {
                 .fill(Color.pgCard)
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.pgBorder, lineWidth: 1))
         )
+    }
+
+    private func categoryPill(text: String, color: Color) -> some View {
+        Text(text)
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundColor(color)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(color.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 4))
     }
 }

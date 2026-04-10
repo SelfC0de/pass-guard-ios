@@ -19,6 +19,7 @@
 		B1DE4038F7B9818ECE3120FA /* AddEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D565A3DDE4FA7F12C22997DB /* AddEditView.swift */; };
 		046983684F514AFAEF3F364A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBA34F55B41B511440B3E2C7 /* SettingsView.swift */; };
 		7E8F9A0B1C2D3E4F5A6B7C8D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6D7E8F9A0B1C2D3E4F5A6B7C /* Assets.xcassets */; };
+		19583FC305B0CB80A4FCB898 /* PasswordGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2C08835BD9F02BC33E0B299 /* PasswordGenerator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,7 @@
 		6D7E8F9A0B1C2D3E4F5A6B7C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		8F9A0B1C2D3E4F5A6B7C8D9E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		5C6D7E8F9A0B1C2D3E4F5A6B /* PassGuard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PassGuard.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2C08835BD9F02BC33E0B299 /* PasswordGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PasswordGenerator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,6 +81,7 @@
 				6F6C84921476D186410EC7F6 /* VaultView.swift */,
 				D565A3DDE4FA7F12C22997DB /* AddEditView.swift */,
 				BBA34F55B41B511440B3E2C7 /* SettingsView.swift */,
+				C2C08835BD9F02BC33E0B299 /* PasswordGenerator.swift */,
 				6D7E8F9A0B1C2D3E4F5A6B7C /* Assets.xcassets */,
 				8F9A0B1C2D3E4F5A6B7C8D9E /* Info.plist */,
 			);
@@ -163,6 +166,7 @@
 				6B53651E7DBA932EF2099540 /* Components.swift in Sources */,
 				B9E883B552ACC4BF2E09117E /* TabBar.swift in Sources */,
 				4489D76A2927EACBE58DA8C2 /* VaultView.swift in Sources */,
+				19583FC305B0CB80A4FCB898 /* PasswordGenerator.swift in Sources */,
 				B1DE4038F7B9818ECE3120FA /* AddEditView.swift in Sources */,
 				046983684F514AFAEF3F364A /* SettingsView.swift in Sources */,
 			);

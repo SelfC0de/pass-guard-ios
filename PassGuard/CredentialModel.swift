@@ -1,12 +1,47 @@
 import Foundation
 import SwiftUI
 
+enum CredentialCategory: String, CaseIterable, Codable {
+    case general  = "general"
+    case codes    = "codes"
+    case wifi     = "wifi"
+    case security = "security"
+
+    var label: String {
+        switch self {
+        case .general:  return "Все"
+        case .codes:    return "Коды"
+        case .wifi:     return "Wi-Fi"
+        case .security: return "Безопасность"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .general:  return "square.grid.2x2.fill"
+        case .codes:    return "barcode"
+        case .wifi:     return "wifi"
+        case .security: return "lock.shield.fill"
+        }
+    }
+
+    var accent: Color {
+        switch self {
+        case .general:  return .pgBlue
+        case .codes:    return .pgAmber
+        case .wifi:     return .pgGreen
+        case .security: return .pgPurple
+        }
+    }
+}
+
 struct Credential: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
     var url: String = ""
     var login: String = ""
     var password: String = ""
     var token: String = ""
+    var category: CredentialCategory = .general
     var createdAt: Date = Date()
 
     var displayTitle: String {
@@ -18,20 +53,14 @@ struct Credential: Identifiable, Codable, Equatable {
                 .components(separatedBy: "/").first ?? url
         }
         if !login.isEmpty { return login }
-        return "Untitled"
+        return "Без названия"
     }
 
     var initials: String {
-        let t = displayTitle
-        let ch = t.first?.uppercased() ?? "?"
-        return ch
+        displayTitle.first?.uppercased() ?? "?"
     }
 
-    var accentColor: Color {
-        let colors: [Color] = [.pgBlue, .pgPurple, .pgGreen, .pgAmber, .pgRed]
-        let idx = abs(id.hashValue) % colors.count
-        return colors[idx]
-    }
+    var accentColor: Color { category.accent }
 
     var strengthScore: Double {
         let p = password
@@ -48,25 +77,25 @@ struct Credential: Identifiable, Codable, Equatable {
 
     var strengthColor: Color {
         switch strengthScore {
-        case 0..<0.4:  return .pgRed
+        case 0..<0.4:   return .pgRed
         case 0.4..<0.7: return .pgAmber
-        default:        return .pgGreen
+        default:         return .pgGreen
         }
     }
 }
 
 extension Color {
-    static let pgBackground   = Color(hex: "#09090f")
-    static let pgSecondary    = Color(hex: "#0f0f1c")
-    static let pgCard         = Color(hex: "#13131f")
-    static let pgBorder       = Color(white: 1, opacity: 0.07)
-    static let pgBlue         = Color(hex: "#2563eb")
-    static let pgBlueDim      = Color(hex: "#1e3a5f")
-    static let pgPurple       = Color(hex: "#7c3aed")
-    static let pgGreen        = Color(hex: "#16a34a")
-    static let pgAmber        = Color(hex: "#d97706")
-    static let pgRed          = Color(hex: "#dc2626")
-    static let pgTextPrimary  = Color(hex: "#e0e8ff")
+    static let pgBackground    = Color(hex: "#09090f")
+    static let pgSecondary     = Color(hex: "#0f0f1c")
+    static let pgCard          = Color(hex: "#13131f")
+    static let pgBorder        = Color(white: 1, opacity: 0.07)
+    static let pgBlue          = Color(hex: "#2563eb")
+    static let pgBlueDim       = Color(hex: "#1e3a5f")
+    static let pgPurple        = Color(hex: "#7c3aed")
+    static let pgGreen         = Color(hex: "#16a34a")
+    static let pgAmber         = Color(hex: "#d97706")
+    static let pgRed           = Color(hex: "#dc2626")
+    static let pgTextPrimary   = Color(hex: "#e0e8ff")
     static let pgTextSecondary = Color(white: 1, opacity: 0.35)
     static let pgTextTertiary  = Color(white: 1, opacity: 0.18)
 
@@ -84,7 +113,6 @@ extension Color {
 
 class CredentialStore: ObservableObject {
     @Published var items: [Credential] = []
-
     private let key = "pg_credentials_v1"
 
     init() { load() }
@@ -106,6 +134,16 @@ class CredentialStore: ObservableObject {
     func delete(_ c: Credential) {
         items.removeAll { $0.id == c.id }
         persist()
+    }
+
+    func deleteAll() {
+        items.removeAll()
+        persist()
+    }
+
+    func items(for category: CredentialCategory) -> [Credential] {
+        if category == .general { return items }
+        return items.filter { $0.category == category }
     }
 
     private func persist() {
