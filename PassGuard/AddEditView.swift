@@ -9,11 +9,10 @@ struct AddEditView: View {
     @State private var draft: Credential = Credential()
     @State private var isEdit: Bool = false
 
-    @FocusState private var focusedField: FormField?
-
-    enum FormField: Hashable {
-        case url, login, password, token
-    }
+    @FocusState private var focusedURL: Bool
+    @FocusState private var focusedLogin: Bool
+    @FocusState private var focusedPassword: Bool
+    @FocusState private var focusedToken: Bool
 
     var body: some View {
         NavigationView {
@@ -35,29 +34,28 @@ struct AddEditView: View {
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("Готово") { focusedField = nil }
-                        .foregroundColor(.pgBlue)
-                        .fontWeight(.medium)
+                    Button("Готово") {
+                        focusedURL = false
+                        focusedLogin = false
+                        focusedPassword = false
+                        focusedToken = false
+                    }
+                    .foregroundColor(.pgBlue)
+                    .fontWeight(.medium)
                 }
             }
         }
-        .onAppear {
-            if let c = credential {
-                draft = c
-                isEdit = true
-            } else {
-                draft = Credential()
-                isEdit = false
-            }
-        }
-        .onChange(of: credential) { newVal in
-            if let c = newVal {
-                draft = c
-                isEdit = true
-            } else {
-                draft = Credential()
-                isEdit = false
-            }
+        .onAppear { loadDraft() }
+        .onChange(of: credential) { _ in loadDraft() }
+    }
+
+    private func loadDraft() {
+        if let c = credential {
+            draft = c
+            isEdit = true
+        } else {
+            draft = Credential()
+            isEdit = false
         }
     }
 
@@ -89,7 +87,7 @@ struct AddEditView: View {
                 placeholder: "https://example.com",
                 text: $draft.url,
                 keyboard: .URL,
-                focused: $focusedField[.url]
+                focused: $focusedURL
             )
 
             PGTextField(
@@ -98,7 +96,7 @@ struct AddEditView: View {
                 placeholder: "user@email.com",
                 text: $draft.login,
                 keyboard: .emailAddress,
-                focused: $focusedField[.login]
+                focused: $focusedLogin
             )
 
             PGTextField(
@@ -107,7 +105,7 @@ struct AddEditView: View {
                 placeholder: "Пароль",
                 text: $draft.password,
                 isSecure: true,
-                focused: $focusedField[.password]
+                focused: $focusedPassword
             )
 
             if !draft.password.isEmpty {
@@ -127,7 +125,7 @@ struct AddEditView: View {
                 placeholder: "ghp_abc123...",
                 text: $draft.token,
                 isSecure: true,
-                focused: $focusedField[.token]
+                focused: $focusedToken
             )
         }
     }
@@ -142,7 +140,10 @@ struct AddEditView: View {
 
     private var saveButton: some View {
         Button {
-            focusedField = nil
+            focusedURL = false
+            focusedLogin = false
+            focusedPassword = false
+            focusedToken = false
             store.save(draft)
             onSave(draft)
             ToastManager.shared.show(isEdit ? "Сохранено" : "Добавлено", icon: "checkmark.circle.fill")
@@ -191,12 +192,5 @@ struct AddEditView: View {
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.pgRed.opacity(0.25), lineWidth: 1))
             )
         }
-    }
-}
-
-private extension FocusState<AddEditView.FormField?>.Binding {
-    subscript(_ field: AddEditView.FormField) -> Bool {
-        get { wrappedValue == field }
-        set { wrappedValue = newValue ? field : nil }
     }
 }

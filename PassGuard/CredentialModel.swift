@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-struct Credential: Identifiable, Codable {
+struct Credential: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
     var url: String = ""
     var login: String = ""
