@@ -308,7 +308,12 @@ struct CredentialRow: View {
 
     var body: some View {
         HStack(spacing: 14) {
-            InitialsAvatar(text: credential.initials, color: credential.accentColor)
+            FaviconView(
+                urlString: credential.url,
+                fallbackText: credential.initials,
+                fallbackColor: credential.accentColor,
+                size: 36
+            )
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(credential.displayTitle)

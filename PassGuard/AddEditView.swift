@@ -120,20 +120,31 @@ struct AddEditView: View {
         VStack(spacing: 14) {
             // App icon / category icon
             ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [draft.category.accent.opacity(0.8), draft.category.accent],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
+                if draft.url.isEmpty {
+                    // No URL — show category gradient icon
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [draft.category.accent.opacity(0.8), draft.category.accent],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            )
                         )
+                        .frame(width: 64, height: 64)
+                        .shadow(color: draft.category.accent.opacity(0.5), radius: 10, x: 0, y: 4)
+                    Image(systemName: draft.category.icon)
+                        .font(.system(size: 28, weight: .semibold))
+                        .foregroundColor(.white)
+                } else {
+                    FaviconView(
+                        urlString: draft.url,
+                        fallbackText: draft.initials,
+                        fallbackColor: draft.category.accent,
+                        size: 64
                     )
-                    .frame(width: 64, height: 64)
-                    .shadow(color: draft.category.accent.opacity(0.5), radius: 10, x: 0, y: 4)
-                Image(systemName: draft.category.icon)
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundColor(.white)
+                }
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: draft.category)
+            .animation(.easeInOut(duration: 0.2), value: draft.url)
 
             // Editable title
             TextField("Название", text: $draft.title)
