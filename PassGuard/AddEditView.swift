@@ -49,7 +49,7 @@ struct AddEditView: View {
             Button("Отмена", role: .cancel) {}
         }
         .onAppear { loadDraft() }
-        .onChange(of: credential) { loadDraft() }
+        .onChange(of: credential) { _, _ in loadDraft() }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
@@ -61,15 +61,28 @@ struct AddEditView: View {
     }
 
     private func loadDraft() {
-        if let c = credential { draft = c; isEdit = true }
-        else { draft = Credential(); isEdit = false }
+        if let c = credential {
+            draft = c
+            isEdit = true
+        } else {
+            draft = Credential()
+            isEdit = false
+        }
+    }
+
+    private func applyHttps() {
+        let s = draft.url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !s.isEmpty else { return }
+        if !s.hasPrefix("http://") && !s.hasPrefix("https://") {
+            draft.url = "https://" + s
+        }
     }
 
     // MARK: - Nav bar
     private var navBar: some View {
         HStack {
             Button {
-                onSave(draft)
+                dismiss()
             } label: {
                 ZStack {
                     Circle()
@@ -233,13 +246,19 @@ struct AddEditView: View {
             InlineField(
                 label: "Веб-сайт",
                 placeholder: "example.com",
-                text: $draft.url,
+                text: Binding(
+                    get: { draft.url },
+                    set: { draft.url = $0 }
+                ),
                 isSecure: false,
                 keyboard: .URL,
                 focused: $focusedField,
                 field: .url,
                 trailingAction: draft.url.isEmpty ? nil : { ToastManager.shared.copied("URL", value: draft.url) },
-                trailingIcon: draft.url.isEmpty ? nil : "doc.on.doc"
+                trailingIcon: draft.url.isEmpty ? nil : "doc.on.doc",
+                onEditingChanged: { editing in
+                    if !editing { applyHttps() }
+                }
             )
 
             divider
@@ -350,6 +369,7 @@ struct InlineField: View {
     let field: AddEditView.FormField
     var trailingAction: (() -> Void)?
     var trailingIcon: String?
+    var onEditingChanged: ((Bool) -> Void)? = nil
 
     @State private var revealed: Bool = false
 
@@ -374,6 +394,11 @@ struct InlineField: View {
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
             .multilineTextAlignment(.trailing)
+            .onChange(of: focused) { _, newVal in
+                if let cb = onEditingChanged {
+                    cb(newVal == field)
+                }
+            }
 
             if isSecure && !text.isEmpty {
                 Button {

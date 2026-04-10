@@ -33,6 +33,7 @@ struct VaultView: View {
                 store.save(updated)
                 editTarget = nil
             })
+            .id(cred.id)  // force view recreation on each open
         }
         .alert("Удалить все записи?", isPresented: $showDeleteAll) {
             Button("Удалить всё", role: .destructive) {
