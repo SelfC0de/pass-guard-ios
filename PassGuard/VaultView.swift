@@ -81,26 +81,26 @@ struct VaultView: View {
         .padding(.bottom, 12)
     }
 
-    // MARK: - Category cards
+    // MARK: - Category cards (2x2 grid)
     private var categoryCards: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(CredentialCategory.allCases, id: \.self) { cat in
-                    CategoryCard(
-                        category: cat,
-                        count: cat == .general ? store.items.count : store.items(for: cat).count,
-                        isSelected: selectedCategory == cat
-                    ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedCategory = cat
-                        }
+        LazyVGrid(
+            columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
+            spacing: 10
+        ) {
+            ForEach(CredentialCategory.allCases, id: \.self) { cat in
+                CategoryCard(
+                    category: cat,
+                    count: cat == .general ? store.items.count : store.items(for: cat).count,
+                    isSelected: selectedCategory == cat
+                ) {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        selectedCategory = cat
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 4)
         }
-        .padding(.bottom, 8)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 12)
     }
 
     // MARK: - Search
@@ -244,35 +244,37 @@ struct CategoryCard: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(category.accent.opacity(isSelected ? 0.25 : 0.12))
-                            .frame(width: 32, height: 32)
-                        Image(systemName: category.icon)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(category.accent)
-                    }
-                    Spacer()
-                    if isSelected {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(category.accent)
-                    }
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(category.accent.opacity(isSelected ? 0.28 : 0.14))
+                        .frame(width: 42, height: 42)
+                    Image(systemName: category.icon)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(category.accent)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(count)")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(isSelected ? category.accent : .pgTextPrimary)
                     Text(category.label)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(isSelected ? category.accent.opacity(0.8) : .pgTextSecondary)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(isSelected ? category.accent : .pgTextPrimary)
+                        .lineLimit(1)
+                    Text("\(count) " + plural(count))
+                        .font(.system(size: 11))
+                        .foregroundColor(isSelected ? category.accent.opacity(0.7) : .pgTextSecondary)
+                }
+
+                Spacer(minLength: 0)
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(category.accent)
                 }
             }
-            .padding(12)
-            .frame(width: 100)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(isSelected ? category.accent.opacity(0.08) : Color.pgCard)
@@ -288,6 +290,13 @@ struct CategoryCard: View {
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
         }
         .buttonStyle(.plain)
+    }
+
+    private func plural(_ n: Int) -> String {
+        let m10 = n % 10, m100 = n % 100
+        if m10 == 1 && m100 != 11 { return "запись" }
+        if (2...4).contains(m10) && !(11...14).contains(m100) { return "записи" }
+        return "записей"
     }
 }
 

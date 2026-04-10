@@ -79,41 +79,42 @@ struct PasswordGeneratorSheet: View {
     var body: some View {
         ZStack {
             Color.pgBackground.ignoresSafeArea()
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Header
-                    HStack {
-                        Text("Генератор паролей")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.pgTextPrimary)
-                        Spacer()
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 22))
-                                .foregroundColor(.pgTextTertiary)
-                        }
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("Генератор паролей")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(.pgTextPrimary)
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.pgTextTertiary)
                     }
-                    .padding(.top, 8)
-
-                    // Preview
-                    previewCard
-
-                    // Length slider
-                    lengthSection
-
-                    // Charset toggles
-                    charsetSection
-
-                    // Format picker
-                    formatSection
-
-                    // Action buttons
-                    actionButtons
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 40)
+                .padding(.top, 20)
+                .padding(.bottom, 14)
+
+                // Preview — always visible at top
+                previewCard
+                    .padding(.horizontal, 20)
+
+                // Settings — compact, no scroll
+                VStack(spacing: 10) {
+                    lengthSection
+                    charsetSection
+                    formatSection
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+
+                Spacer(minLength: 8)
+
+                // Buttons — always visible at bottom
+                actionButtons
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 32)
             }
         }
         .onAppear { preview = settings.generate() }
@@ -153,13 +154,13 @@ struct PasswordGeneratorSheet: View {
                     }
                     .foregroundColor(.pgBlue)
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 5)
                     .background(Color.pgBlue.opacity(0.12))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
         }
-        .padding(16)
+        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color.pgCard)
@@ -262,7 +263,7 @@ struct PasswordGeneratorSheet: View {
                                 .foregroundColor(settings.format == fmt ? .pgTextPrimary : .pgTextSecondary)
                             Spacer()
                         }
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 5)
                         .padding(.horizontal, 4)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
@@ -370,8 +371,8 @@ struct GenSection<Content: View>: View {
             VStack(spacing: 0) {
                 content
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 5)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color.pgCard)
@@ -403,6 +404,6 @@ struct GenToggleRow: View {
                 .labelsHidden()
                 .onChange(of: value) { onChange() }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 5)
     }
 }
